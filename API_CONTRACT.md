@@ -1,8 +1,9 @@
-id (UUID)
-title (string)
-description (string)
-status (enum: new, in_progress, done),
-created_at (ISO8601).
+Поле Тип Ключ Обязательное Значение по умолчанию Описание
+id UUID PK Да автогенерация Уникальный идентификатор задачи
+title string  Да — Краткое название задачи
+description string  Нет пустая строка Подробное описание задачи
+status enum  Да new Состояние: new, in_progress, done
+created_at ISO8601  Да текущее время Дата и время создания (UTC)
 
 Endpoint 1 (Task Service): POST /api/tasks. Принимает JSON тела задачи (без id и created_at). Возвращает созданную задачу со всеми полями и кодом 201.
 
