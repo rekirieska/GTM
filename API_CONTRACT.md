@@ -69,7 +69,14 @@
 
 ### Request Body
 
-Полный объект Task (все 5 полей).
+Полный объект Task:
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "title": "Купить хлеб",
+  "description": "Зайти в магазин",
+  "status": "new",
+  "created_at": "2026-09-14T10:30:00Z"
+}
 
 ### Response 200 OK
 
@@ -77,12 +84,19 @@
 { "status": "received" }
 ```
 
+### Ошибки
+
+| Код | Причина |
+|---|---|
+| 400 | Некорректный JSON |
+| 422 | Не прошла валидация (например, пустой title) |
+
 ---
 
 ## Формат сообщения вебхука
 
 Task Service после успешного создания задачи отправляет POST-запрос  
-на `http://localhost:8001/api/webhooks/task_created` с телом:
+на POST `http://localhost:8001/api/webhooks/task_created` с телом:
 
 ```json
 {
