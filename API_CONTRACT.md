@@ -8,6 +8,8 @@
 | status | enum |  | Да | new | Состояние: new, in_progress, done|
 | created_at | ISO8601 |  |  Да текущее время | Дата и время создания (UTC) |
 
+---
+
 Значение enum для status
 | Значение | Описание |
 |----------|----------|
@@ -15,8 +17,93 @@
 | in_progess | В работе |
 | done | Выполнена |
 
-Endpoint 1 (Task Service): POST /api/tasks. Принимает JSON тела задачи (без id и created_at). Возвращает созданную задачу со всеми полями и кодом 201.
+---
 
-Endpoint 2 (Notification Service): POST /api/webhooks/task_created. Принимает JSON объекта Task. Возвращает 200 OK.
+## Endpoint 1 (Task Service): POST /api/tasks
 
-Формат сообщения вебхука: Определить точное тело запроса, которое Task Service будет отправлять в Notification Service после успешного создания задачи.
+Принимает JSON тела задачи (без id и created_at).  
+Возвращает созданную задачу со всеми полями и кодом 201.
+
+### Request Body
+
+| Поле | Тип | Обязательное | Описание |
+|---|---|---|---|
+| title | string | Да | Краткое название задачи |
+| description | string | Нет | Подробное описание |
+| status | enum | Нет | new / in_progress / done, по умолчанию new |
+
+Пример запроса:
+
+```json
+{
+  "title": "Купить хлеб",
+  "description": "Зайти в магазин",
+  "status": "new"
+}
+```
+
+### Response 201 Created
+
+```json
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "title": "Купить хлеб",
+  "description": "Зайти в магазин",
+  "status": "new",
+  "created_at": "2026-09-14T10:30:00Z"
+}
+```
+
+### Ошибки
+
+| Код | Причина |
+|---|---|
+| 400 | Некорректный JSON |
+| 422 | Не прошла валидация (например, пустой title) |
+
+---
+
+## Endpoint 2 (Notification Service): POST /api/webhooks/task_created
+
+Принимает JSON объекта Task. Возвращает 200 OK.
+
+### Request Body
+
+Полный объект Task (все 5 полей).
+
+### Response 200 OK
+
+```json
+{ "status": "received" }
+```
+
+---
+
+## Формат сообщения вебхука
+
+Task Service после успешного создания задачи отправляет POST-запрос  
+на `http://localhost:8001/api/webhooks/task_created` с телом:
+
+```json
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "title": "Купить хлеб",
+  "description": "Зайти в магазин",
+  "status": "new",
+  "created_at": "2026-09-14T10:30:00Z"
+}
+```
+
+**Поведение при недоступности Notification Service:**  
+Task Service логирует ошибку и продолжает работу.  
+Задача всё равно считается созданной (HTTP 201 возвращается клиенту).
+
+---
+
+## Локальные точки отказа
+
+| Сервис | Точка отказа | Поведение |
+|---|---|---|
+| Task Service | Хранилище задач недоступно | Возврат 500 |
+| Task Service | Notification Service недоступен | Логирование, задача сохранена |
+| Notification Service | Лог-файл недоступен | Возврат 500 |
