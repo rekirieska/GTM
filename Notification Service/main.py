@@ -1,11 +1,18 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
+from enum import Enum
 import logging
-import os
+
 
 '''Логирование в файл и в консоль'''
-LOG_FILE = "notofication.log"
+LOG_FILE = "notifications.log"
+
+class TaskStatus(str, Enum):
+    '''Статус задачи — должен совпадать с Task Service.'''
+    NEW = "new"
+    IN_PROGRESS = "in_progress"
+    DONE = "done"
 
 logger = logging.getLogger("notification_service")
 logger.setLevel(logging.INFO)
@@ -27,7 +34,7 @@ class TaskEvent(BaseModel):
     id: str
     title: str
     description: str = ""
-    status: str
+    status: TaskStatus
     created_at: str
 
 @app.post("/api/webhooks/task_created")
