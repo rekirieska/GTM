@@ -1,6 +1,6 @@
 __pycache__/
 *.pyc
-.pytest_chache/
+.pytest_cache/
 notifications.log
 *.log
 .venv/
