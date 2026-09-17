@@ -18,14 +18,19 @@ class TaskStatus(str, Enum):
 logger = logging.getLogger("notification_service")
 logger.setLevel(logging.INFO)
 
-file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
-file_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
-
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(logging.Formatter("[NOTIFY] %(message)s"))
-
-logger.addHandler(file_handler)
 logger.addHandler(console_handler)
+
+# Локальная точка отказа №3: если лог-файл недоступен — пишем только в консоль
+try:
+    file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+    file_handler.setFormatter(
+        logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+    )
+    logger.addHandler(file_handler)
+except OSError as e:
+    logger.warning("Не удалось открыть лог-файл %s: %s. Логи только в консоль.", LOG_FILE, e)
 
 ''' Приложение '''
 app = FastAPI(title="Notification Service")
