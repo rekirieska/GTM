@@ -35,3 +35,15 @@ def test_custom_422_response_body():
     assert response.status_code == 422
     # если сработал handler — будет наше тело, а не стандартное FastAPI
     assert response.json()["detail"] == "Невалидное тело запроса"
+
+def test_webhook_rejects_invalid_status():
+    '''Сценарий ошибки: status вне enum - 422.'''
+    payload = {
+        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "title": "Купить хлеб",
+        "description": "Зайти в магазин",
+        "status": "hello",           # ← не из enum
+        "created_at": "2026-09-14T10:30:00Z",
+    }
+    response = client.post("/api/webhooks/task_created", json=payload)
+    assert response.status_code == 422
