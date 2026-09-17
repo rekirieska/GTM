@@ -1,12 +1,11 @@
-from fastapi import FASTAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from pydnatic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError
 import logging
 import os
 '''Логирование в файл и в консоль'''
 LOG_FILE = "notofication.log"
 
-logger = logging.getLogger(""
 logger = logging.getLogger("notification_service")
 logger.setLevel(logging.INFO)
 
