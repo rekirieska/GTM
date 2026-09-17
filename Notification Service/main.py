@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
 import logging
 import os
+
 '''Логирование в файл и в консоль'''
 LOG_FILE = "notofication.log"
 
