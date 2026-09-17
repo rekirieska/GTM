@@ -35,19 +35,10 @@ class TaskResponse(TaskCreate):
 
 NOTIFICATION_URL = "http://localhost:8001/api/webhooks/task_created"
 
-# Обработчик ошибки валидации (Код 422)
+# Объединенный обработчик: проверяет и сломанный JSON (400), и пустые поля (422)
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"error": "Не прошла валидация (например, пустой title)"}
-    )
-# Импортируйте JSONDecodeError в самый верх файла, если его там нет:
-from json import JSONDecodeError
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    # Проверяем, вызвана ли ошибка именно сломанным синтаксисом JSON
+    # 1. Проверяем, вызвана ли ошибка именно сломанным синтаксисом JSON
     for error in exc.errors():
         if error.get("type") == "json_invalid":
             return JSONResponse(
@@ -55,12 +46,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
                 content={"error": "Некорректный JSON (синтаксическая ошибка)"}
             )
             
-    # Во всех остальных случаях валидации (например, пустой title) возвращаем 422
+    # 2. Во всех остальных случаях (например, пустой title) возвращаем 422
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={"error": "Не прошла валидация полей"}
     )
-
 
 @app.post("/api/tasks", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 async def create_task(task_in: TaskCreate):
