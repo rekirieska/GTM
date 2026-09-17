@@ -23,13 +23,12 @@ logger.addHandler(console_handler)
 app = FastAPI(title="Notification Service")
 
 class TaskEvent(BaseModel):
-    """Событие создания задачи — приходит от Task Service."""
+    """Событие создания задачи приходит от Task Service."""
     id: str
     title: str
     description: str = ""
     status: str
     created_at: str
-
 
 @app.post("/api/webhooks/task_created")
 def task_created(task: TaskEvent):
@@ -43,13 +42,12 @@ def task_created(task: TaskEvent):
         return {"status": "received"}
 
     except Exception as e:
-        # Локальная точка отказа №2 — ошибка при обработке
+        ''' Локальная точка отказа №2 — ошибка при обработке '''
         logger.error("Ошибка обработки события task_id=%s: %s", task.id, e)
         return JSONResponse(
             status_code=500,
             content={"status": "error", "detail": "Обработка не удалась"},
         )
-
 
 @app.exception_handler(ValidationError)
 async def validation_exception_handler(request: Request, exc: ValidationError):
@@ -59,7 +57,6 @@ async def validation_exception_handler(request: Request, exc: ValidationError):
         status_code=422,
         content={"status": "error", "detail": "Невалидное тело запроса"},
     )
-
 
 @app.get("/health")
 def health():
