@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
+from fastapi.exceptions import RequestValidationError
 from enum import Enum
 import logging
 
@@ -56,8 +57,8 @@ def task_created(task: TaskEvent):
             content={"status": "error", "detail": "Обработка не удалась"},
         )
 
-@app.exception_handler(ValidationError)
-async def validation_exception_handler(request: Request, exc: ValidationError):
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
     '''Локальная точка отказа №1 — невалидное тело запроса'''
     logger.warning("Невалидное тело запроса: %s", exc)
     return JSONResponse(
