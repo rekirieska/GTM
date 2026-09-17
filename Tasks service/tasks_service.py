@@ -12,6 +12,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("TaskService")
 
 app = FastAPI(title="Task Service")
+tasks_db = {} 
 
 # Имитация доступности базы данных для обработки Точки Отказа 1
 IS_DATABASE_AVAILABLE = True 
@@ -41,16 +42,25 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={"error": "Не прошла валидация (например, пустой title)"}
     )
+# Импортируйте JSONDecodeError в самый верх файла, если его там нет:
+from json import JSONDecodeError
 
-# Обработчик для некорректного JSON (Код 400)
-@app.exception_handler(Exception)
-async def generic_exception_handler(request: Request, exc: Exception):
-    if "json" in str(exc).lower() or "decode" in str(exc).lower():
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"error": "Некорректный JSON"}
-        )
-    raise exc
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # Проверяем, вызвана ли ошибка именно сломанным синтаксисом JSON
+    for error in exc.errors():
+        if error.get("type") == "json_invalid":
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"error": "Некорректный JSON (синтаксическая ошибка)"}
+            )
+            
+    # Во всех остальных случаях валидации (например, пустой title) возвращаем 422
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"error": "Не прошла валидация полей"}
+    )
+
 
 @app.post("/api/tasks", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 async def create_task(task_in: TaskCreate):
@@ -72,7 +82,8 @@ async def create_task(task_in: TaskCreate):
         "status": task_in.status.value,
         "created_at": created_at_iso
     }
-    
+    tasks_db[str(task_id)] = new_task
+    logger.info(f"Задача {task_id} успешно сохранена в in-memory БД.")
     # Отправка вебхука в Notification Service
     try:
         async with httpx.AsyncClient() as client:
