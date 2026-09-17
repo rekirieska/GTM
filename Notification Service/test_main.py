@@ -25,3 +25,13 @@ def test_health():
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+def test_custom_422_response_body():
+    '''Проверяем, что наш кастомный handler реально возвращает своё тело.'''
+    response = client.post(
+        "/api/webhooks/task_created",
+        json={"title": "Без id"},
+    )
+    assert response.status_code == 422
+    # если сработал handler — будет наше тело, а не стандартное FastAPI
+    assert response.json()["detail"] == "Невалидное тело запроса"
